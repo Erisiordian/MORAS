@@ -1,0 +1,24 @@
+CHIP IsPalindrome {
+    IN a[16];
+    OUT isPalindrome;
+
+    PARTS:
+    Xor(a=a[0], b=a[15], out=check0);
+    Xor(a=a[1], b=a[14], out=check1);
+    Xor(a=a[2], b=a[13], out=check2);
+    Xor(a=a[3], b=a[12], out=check3);
+    Xor(a=a[4], b=a[11], out=check4);
+    Xor(a=a[5], b=a[10], out=check5);
+    Xor(a=a[6], b=a[9], out=check6);
+    Xor(a=a[7], b=a[8], out=check7);
+
+    Or8Way(in[0]=check0, in[1]=check1, in[2]=check2, in[3]=check3, 
+           in[4]=check4, in[5]=check5, in[6]=check6, in[7]=check7, 
+           out=notPalindrome);
+
+    Not(in=notPalindrome, out=isPalindrome);
+}
+
+
+
+
