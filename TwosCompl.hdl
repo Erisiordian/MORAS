@@ -1,0 +1,10 @@
+CHIP TwosCompl {
+    IN in[16];
+    OUT out[16];
+    PARTS:
+    // Invertiramo sve bitove ulaza
+    Not16(in=in, out=notIn);
+
+    // Dodajemo 1 koristeći Add16
+    Add16(a=notIn, b[0]=true, b[1..15]=false, out=out);
+}
