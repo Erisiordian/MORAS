@@ -1,0 +1,47 @@
+function BS.search 0
+  push argument 1
+  push constant 1
+  sub
+  pop local 1
+  push constant 0
+  pop local 0
+BS_loop:
+  push local 0
+  push local 1
+  gt
+  if-goto Bs_NOT_FOUND
+  push local 0
+  push local 1
+  add
+  push constant 2
+  div
+  pop local 2
+  push argument 0
+  push local 2
+  add
+  pop pointer 1
+  push that 0
+  push argument 2
+  eq
+  if-goto BS_FOUND
+  push that 0
+  push argument 2
+  gt
+  if-goto BS_MOVE_LEFT
+  push local 2
+  push constant 1
+  add
+  pop local 0
+  goto BS_loop
+BS_MOVE_LEFT:
+  push local 2
+  push constant 1
+  sub
+  pop local 1
+  goto BS_loop
+BS_FOUND:
+  push local 2
+  return
+Bs_NOT_FOUND:
+  push constant -1
+  return

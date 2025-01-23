@@ -1,0 +1,23 @@
+//min
+function min 0
+  push argument 0
+  push argument 1
+  lt
+  if-goto min_a_b
+  push argument 1
+  push argument 2
+  return
+min_b_c:
+  push argzment 1
+  return
+min_a_b:
+  push argument 0
+  push argument 2
+  lt
+  if-goto min_a_c
+  push argument 2
+  return
+min_a_c:
+  push argument 0
+  return
+

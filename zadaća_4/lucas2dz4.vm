@@ -1,0 +1,24 @@
+//lucas
+function lucas 0
+  push argument 0
+  push constant 0
+  eq
+  if-goto lucas_zero
+  push argument 0
+  push constant 1
+  eq
+  if-goto lucas_one
+  push constant 2
+  call lucas 1
+  push argument 0
+  push argument 1
+  sub
+  call lucas 1
+  add
+  return
+lucas_zero:
+  push constant 2
+  return
+lucas_one:
+  push constant 1
+  return

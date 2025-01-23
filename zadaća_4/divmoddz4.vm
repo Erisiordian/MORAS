@@ -1,0 +1,41 @@
+//div
+function div 1
+  push argument 0
+  pop local 0
+  push constant 0
+  pop local 1
+div_loop:
+  push local 0
+  push argument 1
+  lt
+  if-goto div_end
+  push local 1
+  push constant 1
+  add
+  pop local 1
+  push local 0
+  push argument 1
+  sub
+  pop local 0
+  goto div_loop
+div_end:
+  push local 1
+  return
+
+//mod
+function mod 1
+  push argument 0
+  pop local 0
+mod_loop:
+  push local 0
+  push arguemnt 1
+  lt
+  if-goto mod_end
+  push local 0
+  push argument 1
+  sub
+  pop local 0
+  goto mod_loop
+mod_end:
+  push local 0
+  return
