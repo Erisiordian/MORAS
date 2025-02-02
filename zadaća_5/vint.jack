@@ -1,0 +1,108 @@
+class vint {
+    field Array data;
+    field int capacity;
+
+    constructor vint new(int n) {
+        if (n < 0) {
+            let capacity = 1;
+        } else {
+            let capacity = Math.pow(2, n);
+        }
+        let data = Array.new(capacity);
+        return this;
+    }
+
+    
+    method int len() {
+        return capacity;
+    }
+
+    method void set(int k, int v) {
+        if ((k >= 0) & (k < capacity)) {
+            let data[k] = v;
+        }
+        return;
+    }
+
+    method int get(int k) {
+        if ((k >= 0) & (k < capacity)) {
+            return data[k];
+        }
+        return 0; // Default value if index is out of bounds
+    }
+
+    method void resize(int m) {
+        var int newCapacity;
+        if (m < 0) {
+            let newCapacity = 1;
+        } else {
+            let newCapacity = Math.pow(2, m);
+        }
+
+        var Array newData;
+        let newData = Array.new(newCapacity);
+
+        var int i;
+        let i = 0;
+        while ((i < capacity) & (i < newCapacity)) {
+            let newData[i] = data[i];
+            let i = i + 1;
+        }
+
+        let data = newData;
+        let capacity = newCapacity;
+        return;
+    }
+
+    function boolean is_eq(vint v1, vint v2) {
+        if (v1.len() != v2.len()) {
+            return false;
+        }
+
+        var int i;
+        let i = 0;
+        while (i < v1.len()) {
+            if (v1.get(i) != v2.get(i)) {
+                return false;
+            }
+            let i = i + 1;
+        }
+        return true;
+    }
+
+    function boolean elems(vint v1, vint v2) {
+        if (v1.len() != v2.len()) {
+            return false;
+        }
+
+        var Array v2Copy;
+        let v2Copy = Array.new(v2.len());
+        var int i;
+        let i = 0;
+        while (i < v2.len()) {
+            let v2Copy[i] = v2.get(i);
+            let i = i + 1;
+        }
+
+        let i = 0;
+        while (i < v1.len()) {
+            var boolean found;
+            let found = false;
+            var int j;
+            let j = 0;
+            while (j < v2.len()) {
+                if ((v1.get(i) == v2Copy[j]) & (v2Copy[j] != -1)) {
+                    let v2Copy[j] = -1; // Mark as used
+                    let found = true;
+                    break;
+                }
+                let j = j + 1;
+            }
+            if (~found) {
+                return false;
+            }
+            let i = i + 1;
+        }
+        return true;
+    }
+}
