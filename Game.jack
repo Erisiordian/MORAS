@@ -1,0 +1,380 @@
+class Game {
+    field Puzzle puzzle;
+    field MoveList lastMove;
+    field Array answers;
+    field int row, col, nEmpty;
+    static int nPuzzles;
+
+    constructor Game new() {
+        let nPuzzles = 10;
+        return this;
+    }
+
+    /** Run the main game loop.
+     *
+     * Initially display the main menu, which allows the user to select a
+     * predefined puzzle. When the user selects a puzzle, launch the puzzle UI.
+     * When the user exits the puzzle, display the main menu again.
+     */
+    method void run() {
+        var boolean exit;
+        var String input;
+        var char ch;
+        var int puzzleId;
+
+        while (~exit) {
+            do Screen.clearScreen();
+
+            do Output.moveCursor(2, 28);
+            do Output.printString("SUDOKU");
+            do Output.moveCursor(3, 28);
+            do Output.printString("======");
+
+            do Output.moveCursor(5, 14);
+            do Output.printString("Izaberi broj [1-");
+            do Output.printInt(nPuzzles);
+            do Output.printString("] za brianje zagonetke,");
+            do Output.moveCursor(6, 16);
+            do Output.printString("ili stisni [Q] za izlaz: ");
+
+            let input = Keyboard.readLine("");
+            let puzzleId = input.intValue();
+
+            if (input.length() > 0) {
+                let ch = input.charAt(0);
+                if ((ch = 81) | (ch = 113)) { // Q | q
+                    let exit = true;
+                } else {
+                    if ((puzzleId > 0) & (puzzleId < (nPuzzles + 1))) {
+                        do play(puzzleId);
+                    }
+                }
+            }
+            do input.dispose();
+            do Sys.wait(1);
+        }
+        do input.dispose();
+        return;
+    }
+
+    /** Play a sudoku puzzle.
+     *
+     * Draw the puzzle UI, load in a puzzle by its ID, and respond to the
+     * user's keypress events.
+     *
+     * The game will continue running indefinitely until the user exits to the
+     * main menu by pressing the 'x' key.
+     */
+    method void play(int puzzleId) {
+        var boolean exit;
+        var char key;
+
+        let exit = false;
+        let row = 0;
+        let col = 0;
+        let puzzle = Puzzle.new();
+        let lastMove = null;
+
+        do Screen.clearScreen();
+        do drawBackground(puzzleId);
+        let nEmpty = puzzle.loadFromId(puzzleId);
+        let answers = Array.new(81);
+
+        do drawPuzzle();
+        do drawCursor();
+
+        while (~exit) {
+            // Wait until the user presses down some key ...
+            while (key = 0) {
+                let key = Keyboard.keyPressed();
+                do Sys.wait(1);
+            }
+
+            if ((key = 88) | (key = 120)) { // X | x
+                let exit = true;
+            }
+
+            if (key = 131) { do moveUp(); } // up arrow
+            if (key = 133) { do moveDown(); } // down arrow
+            if (key = 130) { do moveLeft(); } // left arrow
+            if (key = 132) { do moveRight(); } // right arrow
+
+            if ((key > 48) & (key < 58)) { // 1-9
+                do addMove(key - 48);
+            }
+            if ((key = 48) | (key = 129) | (key = 139)) { // 0 | DEL | Backsp.
+                do addMove(0);
+            }
+            do Sys.wait(1);
+
+            // Wait until the user releases the key ...
+            while (~(key = 0)) {
+                let key = Keyboard.keyPressed();
+                do Sys.wait(1);
+            }
+        }
+
+        // We are exiting to the main menu, so clean up puzzle UI resources.
+        do answers.dispose();
+        do puzzle.dispose();
+        let answers = null;
+        let puzzle = null;
+        if (~(lastMove = null)) {
+            do lastMove.disposeBackwards();
+            let lastMove = null;
+        }
+        return;
+    }
+
+    /** Move the game cursor up one cell, unless already at the top. */
+    method void moveUp() {
+        if (row > 0) {
+            do eraseCursor();
+            let row = row - 1;
+            do drawCursor();
+        }
+        return;
+    }
+
+    /** Move the game cursor down one cell, unless already at the bottom. */
+    method void moveDown() {
+        if (row < 8) {
+            do eraseCursor();
+            let row = row + 1;
+            do drawCursor();
+        }
+        return;
+    }
+
+    /** Move the game cursor left one cell, unless already at the left edge. */
+    method void moveLeft() {
+        if (col > 0) {
+            do eraseCursor();
+            let col = col - 1;
+            do drawCursor();
+        }
+        return;
+    }
+
+    /** Move the game cursor right one cell, unless already at the right edge. */
+    method void moveRight() {
+        if (col < 8) {
+            do eraseCursor();
+            let col = col + 1;
+            do drawCursor();
+        }
+        return;
+    }
+
+    /** Draw the static background elements of the puzzle UI. */
+    method void drawBackground(int puzzleId) {
+        var int i, x, y;
+
+        // Draw horizontal grid lines
+        let x = 10;
+        let y = 16;
+
+        // Double the outer border and the 3x3 sub-grid borders
+        do Screen.drawLine(x - 1, y - 1, x + 145, y - 1);
+        do Screen.drawLine(x - 1, y + 199, x + 145, y + 199);
+        do Screen.drawLine(x, y + 65, x + 144, y + 65);
+        do Screen.drawLine(x, y + 131, x + 144, y + 131);
+
+        do Screen.drawLine(x - 1, y - 1, x - 1, y + 199);
+        do Screen.drawLine(x + 145, y - 1, x + 145, y + 199);
+        do Screen.drawLine(x + 49, y, x + 49, y + 198);
+        do Screen.drawLine(x + 97, y, x + 97, y + 198);
+
+        let i = 0;
+        while (i < 10) {
+            do Screen.drawLine(x, y, x + 144, y);
+            let i = i + 1;
+            let y = y + 22;
+        }
+
+        // Draw vertical grid lines
+        let y = 16;
+        let i = 0;
+        while (i < 10) {
+            do Screen.drawLine(x, y, x, y + 198);
+            let i = i + 1;
+            let x = x + 16;
+        }
+
+        // Write the instructional text
+        let x = 28;
+        do Output.moveCursor(2, x);
+        do Output.printString("SUDOKU");
+        do Output.moveCursor(3, x);
+        do Output.printString("======");
+
+        do Output.moveCursor(5, x);
+        do Output.printString("PUZZLE #");
+        do Output.printInt(puzzleId);
+
+        do Output.moveCursor(9, x);
+        do Output.printString("[Arrow keys]: Izaberi polje");
+        do Output.moveCursor(11, x);
+        do Output.printString("[1-9]: Izaberi broj");
+        do Output.moveCursor(13, x);
+        do Output.printString("[0, Del, Backsp]: Vrati");
+        do Output.moveCursor(15, x);
+        do Output.printString("[X]: Izlaz");
+
+        return;
+    }
+
+    /** Print a character into a game grid cell */
+    method void writeCell(int row, int col, char value) {
+        do Output.moveCursor(2 + (row * 2), 2 + (col * 2));
+        do Output.printChar(value);
+        return;
+    }
+
+    /** Empty a game grid cell */
+    method void clearCell(int row, int col) {
+        do writeCell(row, col, 32); // Space
+        return;
+    }
+
+    /** Convert a grid cell reference (row, col) to a flat array index */
+    function int cellRefToIndex(int row, int col) {
+        return (row * 9) + col;
+    }
+
+    /** Render the initial puzzle state.
+     *
+     * Each grid cell in the puzzle is either hidden, or a clue. Clues will be
+     * rendered with the digit from the solution, and hidden cells will be
+     * rendered initially empty.
+     */
+    method void drawPuzzle() {
+        var int i, row, col;
+        var char ch;
+        while (i < 81) {
+            let ch = 32;
+            if (puzzle.isClue(i)) {
+                let ch = 48 + puzzle.getSolution(i);
+            }
+            do writeCell(row, col, ch);
+            let i = i + 1;
+            let col = col + 1;
+            if (col > 8) {
+                let row = row + 1;
+                let col = 0;
+            }
+        }
+        return;
+    }
+
+    /** Draw (or erase) the game cursor at the current cell position */
+    method void drawCursorColor(boolean color) {
+        var int x, y;
+        let x = 12 + (col * 16);
+        let y = 18 + (row * 22);
+        do Screen.setColor(color);
+        do Screen.drawLine(x, y, x + 12, y);
+        do Screen.drawLine(x, y, x, y + 18);
+        do Screen.drawLine(x + 12, y, x + 12, y + 18);
+        do Screen.drawLine(x, y + 18, x + 12, y + 18);
+        do Screen.setColor(true);
+        return;
+    }
+
+    /** Draw the game cursor at the current cell position */
+    method void drawCursor() {
+        do drawCursorColor(true);
+        return;
+    }
+
+    /** Erase the game cursor at the current cell position */
+    method void eraseCursor() {
+        do drawCursorColor(false);
+        return;
+    }
+
+    /** Erase the message area of the game screen */
+    method void clearMessage() {
+        do Screen.setColor(false);
+        do Screen.drawRectangle(0, 218, 511, 255);
+        do Screen.setColor(true);
+        return;
+    }
+
+    /** Print some text to the message area of the screen. Caller should limit
+     * the message parameter to a maximum of 62 characters.
+     */
+    method void printMessage(String message) {
+        do Output.moveCursor(21, 2);
+        do Output.printString(message);
+        return;
+    }
+
+    /** Add a player move to the game.
+     * A move sets or clears the value of the current cell. A value in the
+     * range 1-9 sets the cell to that symbol, any value outside that range
+     * clears it. Each valid move is added to a list of player moves so that we
+     * can undo/redo them later.
+     *
+     * If the current cell is a puzzle hint, the move will be prevented.
+     *
+     * If the move completes the puzzle (i.e., no empty cells remain) then
+     * check whether the solution is correct and display a message with the
+     * outcome. 
+     */
+    method void addMove(int value) {
+        var int i;
+
+        do clearMessage();
+        if (puzzle.isClue(Game.cellRefToIndex(row, col))) {
+            do printMessage("Polje je popunjeno!");
+            return;
+        }
+
+        // Move is valid, record it.
+        if (lastMove = null) {
+            let lastMove = MoveList.new(row, col, value, null, null);
+        } else {
+            let lastMove = lastMove.append(row, col, value);
+        }
+
+        let i = Game.cellRefToIndex(row, col);
+        if ((value > 0) & (value < 10)) {
+            do writeCell(row, col, value + 48);
+            if (answers[i] = 0) {
+                let nEmpty = nEmpty - 1;
+            }
+            let answers[i] = value;
+        } else {
+            do clearCell(row, col);
+            let nEmpty = nEmpty + 1;
+            let answers[i] = 0;
+        }
+
+        if (nEmpty = 0) {
+            if (puzzle.checkAnswers(answers)) {
+                do printMessage("Bravo");
+            } else {
+                do printMessage("Probaj ponovo");
+            }
+        }
+
+        return;
+    }
+
+    method void dispose() {
+        if (~(puzzle = null)) {
+            do puzzle.dispose();
+            let puzzle = null;
+        }
+        if (~(lastMove = null)) {
+            do lastMove.disposeBackwards();
+            let lastMove = null;
+        }
+        if (~(answers = null)) {
+            do answers.dispose();
+        }
+        do Memory.deAlloc(this);
+        return;
+    }
+}
